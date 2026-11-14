@@ -18,7 +18,6 @@ type FrameProps = {
   speed?: number;
   /** Cantos de enquadramento (primeiro plano) que "desregistram" levemente em relação à imagem. */
   marks?: boolean;
-  grayscale?: boolean;
   priority?: boolean;
   sizes?: string;
   unoptimized?: boolean;
@@ -58,7 +57,6 @@ export function Frame({
   clip = "l",
   speed,
   marks = true,
-  grayscale = false,
   priority = false,
   sizes = "(min-width: 1024px) 45vw, 90vw",
   unoptimized = false,
@@ -93,7 +91,7 @@ export function Frame({
             priority={priority}
             sizes={sizes}
             unoptimized={unoptimized}
-            className={`object-cover ${grayscale ? "grayscale" : ""}`}
+            className="object-cover"
             style={position ? { objectPosition: position } : undefined}
           />
         </div>

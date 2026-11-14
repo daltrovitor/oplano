@@ -38,7 +38,6 @@ export function SlideIndustry() {
               caption="A sala de cinema: o público reunido diante da mesma tela."
               className="w-[min(30vw,calc(30svh*1.78))]"
               aspect="862/485"
-              grayscale
               clip="l"
               sizes="30vw"
             />

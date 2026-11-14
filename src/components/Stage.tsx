@@ -176,6 +176,9 @@ export function Stage({ titles, children }: StageProps) {
       const track = trackRef.current;
       if (!ready || !root || !track) return;
 
+      /* Qualquer falha do motor de animação cai no plano B (rolagem lateral nativa) em vez de
+         derrubar a página inteira com a tela de erro do Next.js. */
+      try {
       ScrollTrigger.config({ ignoreMobileResize: true });
 
       const slides = gsap.utils.toArray<HTMLElement>("[data-slide]", track);
@@ -419,6 +422,13 @@ export function Stage({ titles, children }: StageProps) {
       return () => {
         mm.revert();
       };
+      } catch (error) {
+        console.error("Stage: animações desativadas, usando rolagem nativa.", error);
+        ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+        gsap.set(track, { clearProps: "transform" });
+        root.classList.add("stage-fallback");
+        return undefined;
+      }
     },
     { scope: rootRef, dependencies: [setActive, ready] },
   );

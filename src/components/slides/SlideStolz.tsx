@@ -44,7 +44,6 @@ export function SlideStolz() {
           caption="Cena de Stolz der Nation: o soldado sozinho contra todos, em preto e branco."
           className="w-[62vw] shrink-0 self-start sm:w-[34vw] lg:mt-[4svh] lg:w-[min(24vw,calc(46svh*1.33))]"
           aspect="1011/760"
-          grayscale
           clip="u"
           speed={-0.05}
           sizes="(min-width: 1024px) 24vw, 62vw"
@@ -56,7 +55,6 @@ export function SlideStolz() {
           caption="A suástica desenhada a tiros: a violência vira assinatura ideológica."
           className="w-[76vw] shrink-0 self-end sm:w-[42vw] lg:mb-[3svh] lg:w-[min(27vw,calc(44svh*1.5))]"
           aspect="1200/800"
-          grayscale
           clip="r"
           speed={0.1}
           sizes="(min-width: 1024px) 27vw, 76vw"

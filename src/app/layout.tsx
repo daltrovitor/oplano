@@ -66,7 +66,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body suppressHydrationWarning>
         <SmoothScrollProvider>{children}</SmoothScrollProvider>
-        <div className="grain" aria-hidden="true" />
       </body>
     </html>
   );

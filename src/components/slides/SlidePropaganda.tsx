@@ -43,7 +43,6 @@ export function SlidePropaganda() {
           caption="Joseph Goebbels, ministro da Propaganda do Reich de 1933 a 1945."
           className="w-[56vw] shrink-0 sm:w-[34vw] lg:w-[min(20vw,calc(46svh*0.72))]"
           aspect="418/580"
-          grayscale
           clip="u"
           speed={0.06}
           sizes="(min-width: 1024px) 20vw, 56vw"
@@ -55,7 +54,6 @@ export function SlidePropaganda() {
           caption="Comício nazista em Nuremberg: o tipo de imagem que o cinema de Riefenstahl transformou em espetáculo."
           className="w-[82vw] shrink-0 self-start sm:w-[50vw] lg:mt-[4svh] lg:w-[min(32vw,calc(36svh*1.78))]"
           aspect="16/9"
-          grayscale
           clip="l"
           speed={-0.04}
           sizes="(min-width: 1024px) 32vw, 82vw"
@@ -67,7 +65,6 @@ export function SlidePropaganda() {
           caption="Paris ocupada: fila para o cinema que exibia os noticiários alemães."
           className="w-[62vw] shrink-0 self-end sm:w-[40vw] lg:mb-[2svh] lg:w-[min(25vw,calc(40svh*1.31))]"
           aspect="1300/991"
-          grayscale
           clip="r"
           speed={0.09}
           sizes="(min-width: 1024px) 25vw, 62vw"
@@ -90,7 +87,6 @@ export function SlidePropaganda() {
           caption="Dirigentes nazistas ao lado de uma câmera: o cinema como assunto de Estado."
           className="mr-[4vw] w-[70vw] shrink-0 self-start sm:w-[44vw] lg:mt-[6svh] lg:w-[min(22vw,calc(34svh*1.6))]"
           aspect="640/400"
-          grayscale
           clip="l"
           speed={-0.07}
           sizes="(min-width: 1024px) 22vw, 70vw"

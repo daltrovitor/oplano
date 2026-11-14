@@ -46,11 +46,11 @@ export function SlideShell({
           className="absolute inset-y-0 -left-[24vw] -right-[24vw]"
         >
           <Image
-            src={backdrop}
+            src={backdrop.replace("/img/", "/img/bg/")}
             alt=""
             fill
             sizes="100vw"
-            className="object-cover opacity-[0.08] grayscale"
+            className="object-cover opacity-[0.08]"
             style={{ objectPosition: backdropPosition }}
           />
         </div>
