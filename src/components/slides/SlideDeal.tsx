@@ -9,11 +9,19 @@ export function SlideDeal() {
   return (
     <SlideShell id="o-acordo" title={CHAPTERS.deal} backdrop="/img/landa-aldo.jpg">
       <div className="flex h-full flex-col items-start justify-between gap-4 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12">
-        <MaskedTitle
-          text={"Você faria\nesse acordo?"}
-          accent={[3]}
-          className="t-display text-[clamp(2.4rem,13vw,4.2rem)] leading-[0.98] lg:col-span-7 lg:text-[clamp(3.5rem,7.4vw,8.5rem)]"
-        />
+        <div className="flex flex-col gap-4 lg:col-span-7 lg:gap-8">
+          <MaskedTitle
+            text={"Você faria\nesse acordo?"}
+            accent={[3]}
+            className="t-display text-[clamp(2.4rem,13vw,4.2rem)] leading-[0.98] lg:text-[clamp(3.5rem,7.4vw,8.5rem)]"
+          />
+          <p
+            data-rise
+            className="t-display text-[clamp(1.1rem,2.2vw,2.25rem)] font-semibold italic text-ink"
+          >
+            Vitor Daltro &amp; Davi Godoy
+          </p>
+        </div>
         <div className="flex min-h-0 w-full flex-1 items-center justify-center lg:col-span-5 lg:flex-none lg:justify-start">
           <Frame
             src="/gif/deal.gif"

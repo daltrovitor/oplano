@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   description:
     "Trabalho de Sociologia sobre Bastardos Inglórios, de Quentin Tarantino: indústria cultural, propaganda nazista, metalinguagem e o cinema como instrumento de vingança histórica.",
   applicationName: "Bastardos Inglórios — Sociologia",
-  authors: [{ name: "Davi" }, { name: "Vitor" }],
+  authors: [{ name: "Davi Godoy" }, { name: "Vitor Daltro" }],
   keywords: [
     "Bastardos Inglórios",
     "Quentin Tarantino",

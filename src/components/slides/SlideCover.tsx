@@ -39,14 +39,12 @@ export function SlideCover() {
             <p className="t-note">Role para o lado ou use as setas do teclado.</p>
           </div>
 
-          <div className="relative hidden pt-4 sm:block">
+          <div className="relative pt-3 sm:pt-4">
             <span data-hline className="absolute left-0 top-0 h-px w-full bg-line" />
             <p className="t-note">
               <span className="font-semibold text-ink">Trabalho de Sociologia</span>
               <span className="mx-3 text-line">|</span>
-              Davi, sociólogo
-              <span className="mx-3 text-line">|</span>
-              Vitor, comercial
+              Davi Godoy &amp; Vitor Daltro
             </p>
           </div>
         </div>
