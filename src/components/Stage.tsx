@@ -6,30 +6,22 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useLenis } from "lenis/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
+import { useFullscreen } from "@/lib/useFullscreen";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
-
-const CLIP_FROM: Record<string, string> = {
-  l: "inset(0% 100% 0% 0%)",
-  r: "inset(0% 0% 0% 100%)",
-  u: "inset(100% 0% 0% 0%)",
-  d: "inset(0% 0% 100% 0%)",
-};
-const CLIP_TO = "inset(0% 0% 0% 0%)";
 
 /** Quanto de rolagem vertical (em múltiplos da distância lateral) cada percurso consome. */
 const SCROLL_LENGTH = 1.25;
 /** Quantos px a fita de película corre para cada px de percurso do palco. */
 const STRIP_SPEED = 1.35;
-
 /** Zoom inicial das imagens (1.22 → 1 enquanto o slide entra na tela). */
 const ZOOM_FROM = 0.22;
 
 type SceneItem = {
   /** Índice do slide a que o elemento pertence. */
   slide: number;
-  /** Para paralaxe: fração da largura da tela; para zoom: ignorado. */
+  /** Para paralaxe: fração da largura da tela; para zoom e giro: ignorado. */
   speed: number;
   set: (value: number) => void;
 };
@@ -46,13 +38,17 @@ type StageProps = {
 
 /**
  * Palco horizontal: fixa a tela (pin) e converte a rolagem vertical (Lenis) em
- * deslocamento lateral. Cada slide anima por ScrollTrigger com `containerAnimation`,
- * lendo as marcações data-* do conteúdo:
- *   data-speed  paralaxe entre planos      data-word   revelação de palavras em máscara
- *   data-zoom   zoom suave da imagem        data-clip   revelação por clip-path (l|r|u|d)
- *   data-rise   subida + fade               data-line   linha-guia vertical que cresce
- *   data-hline  linha horizontal que cresce data-count  contador numérico
- *   data-tilt   inclinação com o ponteiro   data-magnetic botão magnético
+ * deslocamento lateral.
+ *
+ * Revelações (palavras, imagens, textos, linhas) são feitas por CSS: o motor só marca
+ * `.is-in` no slide que entra na tela. O conteúdo é visível por padrão; ele só é escondido
+ * enquanto `html[data-motion="on"]` existir, ou seja, se o motor falhar em qualquer ponto,
+ * nada fica preso invisível.
+ *
+ * Marcações data-* lidas nos slides:
+ *   data-speed  paralaxe entre planos      data-zoom   zoom suave da imagem
+ *   data-tilt   inclina o cartaz           data-count  contador numérico
+ *   data-magnetic botão magnético (ponteiro fino)
  */
 export function Stage({ titles, children }: StageProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -65,15 +61,13 @@ export function Stage({ titles, children }: StageProps) {
   const stageTriggerRef = useRef<ScrollTrigger | null>(null);
   const offsetsRef = useRef<number[]>([]);
   const widthsRef = useRef<number[]>([]);
-  const parallaxRef = useRef<SceneItem[]>([]);
-  const zoomRef = useRef<SceneItem[]>([]);
-  const tiltRef = useRef<SceneItem[]>([]);
   const activeRef = useRef(0);
   const targetRef = useRef(0);
   const lastJumpRef = useRef(0);
   const [ready, setReady] = useState(false);
 
   const lenis = useLenis();
+  const fullscreen = useFullscreen();
   const total = titles.length;
 
   const setActive = useCallback(
@@ -119,7 +113,8 @@ export function Stage({ titles, children }: StageProps) {
     [goTo],
   );
 
-  /* Teclado: setas, Page Up/Down, Home e End navegam entre os slides. */
+  /* Teclado: setas, Page Up/Down, Home, End navegam; F alterna a tela cheia. */
+  const toggleFullscreen = fullscreen.toggle;
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
@@ -144,12 +139,17 @@ export function Stage({ titles, children }: StageProps) {
           event.preventDefault();
           goTo(total - 1);
           break;
+        case "f":
+        case "F":
+          event.preventDefault();
+          void toggleFullscreen();
+          break;
         default:
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [goTo, step, total]);
+  }, [goTo, step, total, toggleFullscreen]);
 
   /* O palco sempre começa no primeiro slide. */
   useEffect(() => {
@@ -157,8 +157,7 @@ export function Stage({ titles, children }: StageProps) {
     window.scrollTo(0, 0);
   }, []);
 
-  /* O motor de animação sobe quando o navegador está ocioso: a capa (CSS puro) aparece
-     primeiro, sem esperar a inicialização do GSAP/ScrollTrigger. */
+  /* O motor sobe quando o navegador está ocioso: a capa (CSS puro) aparece primeiro. */
   useEffect(() => {
     const boot = () => setReady(true);
     /* Safari antigo não tem requestIdleCallback: cai para um timeout curto. */
@@ -177,215 +176,192 @@ export function Stage({ titles, children }: StageProps) {
       const track = trackRef.current;
       if (!ready || !root || !track) return;
 
-      /* Qualquer falha do motor de animação cai no plano B (rolagem lateral nativa) em vez de
-         derrubar a página inteira com a tela de erro do Next.js. */
+      const html = document.documentElement;
+      const touched: HTMLElement[] = [];
+      const counterTweens = new Map<HTMLElement, gsap.core.Tween>();
+      let mm: gsap.MatchMedia | undefined;
+
+      /* Qualquer falha cai no plano B (rolagem lateral nativa, tudo visível) em vez de
+         derrubar a página ou deixar conteúdo escondido. */
+      const bail = (error: unknown) => {
+        console.error("Stage: animações desativadas, usando rolagem nativa.", error);
+        html.removeAttribute("data-motion");
+        counterTweens.forEach((tween) => tween.kill());
+        ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+        touched.forEach((el) => gsap.set(el, { clearProps: "transform" }));
+        gsap.set(track, { clearProps: "transform" });
+        root.classList.add("stage-fallback");
+      };
+
       try {
-      ScrollTrigger.config({ ignoreMobileResize: true });
+        ScrollTrigger.config({ ignoreMobileResize: true });
 
-      const slides = gsap.utils.toArray<HTMLElement>("[data-slide]", track);
-      const getDistance = () => Math.max(1, track.scrollWidth - window.innerWidth);
-      const getStageX = () => (stageTriggerRef.current?.progress ?? 0) * getDistance();
-      const measure = () => {
-        offsetsRef.current = slides.map((slide) => slide.offsetLeft);
-        widthsRef.current = slides.map((slide) => slide.offsetWidth);
-      };
-      measure();
-
-      /**
-       * Paralaxe e zoom calculados em um único passo por quadro, só para os slides
-       * perto da tela (em vez de dezenas de ScrollTriggers independentes).
-       *   paralaxe: x vai de +speed·W (slide entrando) a −speed·W (slide saindo)
-       *   zoom:     1.22 → 1 enquanto a borda esquerda do slide cruza a tela
-       */
-      const applyScene = (stageX: number) => {
-        const W = window.innerWidth;
-        const place = (item: SceneItem, kind: "parallax" | "zoom" | "tilt") => {
-          const left = offsetsRef.current[item.slide] - stageX;
-          const width = widthsRef.current[item.slide];
-          if (left > 2 * W || left + width < -W) return;
-          if (kind === "parallax") {
-            const p = clamp01((W - left) / (W + width));
-            item.set(item.speed * W * (1 - 2 * p));
-          } else if (kind === "tilt") {
-            /* No toque não há ponteiro: os cartazes giram suavemente conforme o slide cruza a tela. */
-            item.set((0.5 - clamp01((W - left) / (W + width))) * 18);
-          } else {
-            item.set(1 + ZOOM_FROM * (1 - clamp01((W - left) / W)));
-          }
+        const slides = gsap.utils.toArray<HTMLElement>("[data-slide]", track);
+        const getDistance = () => Math.max(1, track.scrollWidth - window.innerWidth);
+        const getStageX = () => (stageTriggerRef.current?.progress ?? 0) * getDistance();
+        const measure = () => {
+          offsetsRef.current = slides.map((slide) => slide.offsetLeft);
+          widthsRef.current = slides.map((slide) => slide.offsetWidth);
         };
-        parallaxRef.current.forEach((item) => place(item, "parallax"));
-        zoomRef.current.forEach((item) => place(item, "zoom"));
-        tiltRef.current.forEach((item) => place(item, "tilt"));
-      };
+        measure();
 
-      /* Percurso lateral principal: sempre ativo, mesmo com movimento reduzido. */
-      const horizontal = gsap.to(track, {
-        x: () => -getDistance(),
-        ease: "none",
-        scrollTrigger: {
-          trigger: root,
-          pin: true,
-          scrub: true,
-          anticipatePin: 1,
-          start: "top top",
-          end: () => `+=${Math.round(getDistance() * SCROLL_LENGTH)}`,
-          invalidateOnRefresh: true,
-          onRefresh: (self) => {
-            measure();
-            applyScene(self.progress * getDistance());
-          },
-          onUpdate: (self) => {
-            const x = self.progress * getDistance();
-            applyScene(x);
-            let current = 0;
-            offsetsRef.current.forEach((offset, i) => {
-              if (offset <= x + window.innerWidth * 0.4) current = i;
-            });
-            setActive(current);
-            if (barRef.current) gsap.set(barRef.current, { scaleX: self.progress });
-            if (stripRef.current) {
-              gsap.set(stripRef.current, { backgroundPositionX: -x * STRIP_SPEED });
-            }
-          },
-        },
-      });
-      stageTriggerRef.current = horizontal.scrollTrigger ?? null;
-      const mm = gsap.matchMedia();
+        /* "Reduzir movimento" só vale com ponteiro fino (desktop); no celular tudo anima. */
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const fine = window.matchMedia("(pointer: fine)").matches;
+        const motionAllowed = !(reduced && fine);
+        const touchOnly = window.matchMedia("(pointer: coarse)").matches;
 
-      /* Animações cinematográficas (desligadas quando o usuário pede menos movimento). */
-      /* Com ponteiro de toque (celular) todas as animações ficam ligadas; o "reduzir movimento" só vale em desktop. */
-      mm.add("(prefers-reduced-motion: no-preference), (pointer: coarse)", (context) => {
+        /* --- Paralaxe, zoom e giro dos cartazes (calculados em um único passo por quadro) --- */
         const parallax: SceneItem[] = [];
         const zooms: SceneItem[] = [];
         const tilts: SceneItem[] = [];
-        const touchOnly = window.matchMedia("(pointer: coarse)").matches;
-        let cancelled = false;
+        const counters: HTMLElement[][] = slides.map(() => []);
 
-        /* Paralaxe entre planos (fundo lento, primeiro plano rápido) e zoom: passada leve em todos os slides. */
         slides.forEach((slide, index) => {
           const q = gsap.utils.selector(slide);
+
+          /* Escalonamento (atraso) de cada revelação, lido pelo CSS via --d (ms). */
+          q<HTMLElement>("[data-clip]").forEach((el, k) => el.style.setProperty("--d", String(60 + k * 160)));
+          q<HTMLElement>("[data-rise]").forEach((el, k) => el.style.setProperty("--d", String(450 + k * 90)));
+          q<HTMLElement>("[data-hline]").forEach((el, k) => el.style.setProperty("--d", String(300 + k * 100)));
+          q<HTMLElement>("[data-line]").forEach((el, k) => el.style.setProperty("--d", String(k * 120)));
+
+          q<HTMLElement>("[data-count]").forEach((el) => {
+            counters[index].push(el);
+            el.textContent = "0";
+          });
+
+          if (!motionAllowed) return;
           q<HTMLElement>("[data-speed]").forEach((el) => {
             const speed = Number(el.dataset.speed ?? 0);
             if (!speed) return;
+            touched.push(el);
             parallax.push({ slide: index, speed, set: gsap.quickSetter(el, "x", "px") as SceneItem["set"] });
           });
           q<HTMLElement>("[data-zoom]").forEach((el) => {
+            touched.push(el);
             zooms.push({ slide: index, speed: 0, set: gsap.quickSetter(el, "scale") as SceneItem["set"] });
           });
           if (touchOnly) {
             q<HTMLElement>("[data-tilt]").forEach((el) => {
               gsap.set(el, { transformPerspective: 900 });
+              touched.push(el);
               tilts.push({ slide: index, speed: 0, set: gsap.quickSetter(el, "rotationY", "deg") as SceneItem["set"] });
             });
           }
         });
 
-        /* Linha do tempo de entrada de um slide: é a parte pesada, então só os dois primeiros
-           nascem já; os demais são criados aos poucos, em tempo ocioso (sem travar a thread). */
-        const buildTimeline = (slide: HTMLElement, index: number) => {
-          const q = gsap.utils.selector(slide);
-          const base = { trigger: slide, containerAnimation: horizontal };
-          const words = q<HTMLElement>("[data-word]");
-          const clips = q<HTMLElement>("[data-clip]");
-          const rises = q<HTMLElement>("[data-rise]");
-          const lines = q<HTMLElement>("[data-line]");
-          const hlines = q<HTMLElement>("[data-hline]");
-          const counts = q<HTMLElement>("[data-count]");
+        const slideIn: boolean[] = slides.map(() => false);
 
-          const tl = gsap.timeline({
-            delay: index === 0 ? 0.3 : 0,
-            defaults: { ease: "power3.out" },
-            /* O primeiro slide já está em cena: toca sozinho. A chave scrollTrigger nem pode
-               existir nele (mesmo undefined, o GSAP cria um gatilho sem elemento e quebra no resize). */
-            ...(index === 0
-              ? {}
-              : { scrollTrigger: { ...base, start: "left 62%", toggleActions: "play none none reverse" } }),
-          });
-
-          if (lines.length) {
-            tl.from(
-              lines,
-              { scaleY: 0, transformOrigin: "top center", duration: 1.4, ease: "power3.inOut", stagger: 0.12 },
-              0,
-            );
-          }
-          if (words.length) {
-            tl.from(words, { yPercent: 118, duration: 1.15, ease: "power4.out", stagger: 0.07 }, 0.1);
-          }
-          clips.forEach((el, k) => {
-            const direction = el.dataset.clip ?? "l";
-            tl.fromTo(
-              el,
-              { clipPath: CLIP_FROM[direction] ?? CLIP_FROM.l },
-              { clipPath: CLIP_TO, duration: 1.4, ease: "power4.inOut" },
-              0.05 + k * 0.16,
-            );
-          });
-          if (rises.length) {
-            tl.from(rises, { y: 34, autoAlpha: 0, duration: 0.95, stagger: 0.09 }, 0.45);
-          }
-          if (hlines.length) {
-            tl.from(
-              hlines,
-              { scaleX: 0, transformOrigin: "left center", duration: 1.2, stagger: 0.1 },
-              0.3,
-            );
-          }
-          counts.forEach((el) => {
+        const runCounters = (index: number, on: boolean) => {
+          counters[index].forEach((el) => {
+            counterTweens.get(el)?.kill();
+            el.textContent = "0";
+            if (!on) return;
             const target = Number(el.dataset.count ?? 0);
             const state = { value: 0 };
-            el.textContent = "0";
-            tl.to(
-              state,
-              {
+            counterTweens.set(
+              el,
+              gsap.to(state, {
                 value: target,
                 duration: 2.2,
+                delay: 0.4,
                 ease: "power2.out",
                 onUpdate: () => {
                   el.textContent = String(Math.round(state.value));
                 },
-              },
-              0.4,
+              }),
             );
           });
         };
 
-        /* Com nome, context.add() só registra a função (sem nome ela rodaria na hora) e devolve
-           uma versão "context-safe": tudo que ela criar depois é desfeito no revert. */
-        const buildSafely = context.add?.("buildTimeline", (slide: HTMLElement, index: number) => {
-          if (!cancelled) buildTimeline(slide, index);
-        }) as ((slide: HTMLElement, index: number) => void) | undefined;
+        const applyScene = (stageX: number) => {
+          const W = window.innerWidth;
 
-        const idle = (window as Partial<Window>).requestIdleCallback;
-        slides.forEach((slide, index) => {
-          if (index < 2 || !buildSafely) {
-            buildTimeline(slide, index);
-          } else if (typeof idle === "function") {
-            idle.call(window, () => buildSafely(slide, index), { timeout: 600 + index * 40 });
-          } else {
-            window.setTimeout(() => buildSafely(slide, index), 120 * index);
-          }
-        });
+          /* Revelação: o slide ganha .is-in ao cruzar 62% da tela; ao sair por completo, reinicia. */
+          slides.forEach((slide, i) => {
+            const left = offsetsRef.current[i] - stageX;
+            const width = widthsRef.current[i];
+            const entering = left < W * 0.62 && left + width > W * 0.05;
+            const leaving = left > W * 1.08 || left + width < -W * 0.08;
+            if (!slideIn[i] && entering) {
+              slideIn[i] = true;
+              slide.classList.add("is-in");
+              runCounters(i, true);
+            } else if (slideIn[i] && leaving) {
+              slideIn[i] = false;
+              slide.classList.remove("is-in");
+              runCounters(i, false);
+            }
+          });
 
-        parallaxRef.current = parallax;
-        zoomRef.current = zooms;
-        tiltRef.current = tilts;
-        applyScene(getStageX());
-
-        return () => {
-          cancelled = true;
-          parallaxRef.current = [];
-          zoomRef.current = [];
-          tiltRef.current = [];
+          const place = (item: SceneItem, kind: "parallax" | "zoom" | "tilt") => {
+            const left = offsetsRef.current[item.slide] - stageX;
+            const width = widthsRef.current[item.slide];
+            if (left > 2 * W || left + width < -W) return;
+            if (kind === "parallax") {
+              const p = clamp01((W - left) / (W + width));
+              item.set(item.speed * W * (1 - 2 * p));
+            } else if (kind === "tilt") {
+              /* No toque não há ponteiro: os cartazes giram conforme o slide cruza a tela. */
+              item.set((0.5 - clamp01((W - left) / (W + width))) * 18);
+            } else {
+              item.set(1 + ZOOM_FROM * (1 - clamp01((W - left) / W)));
+            }
+          };
+          parallax.forEach((item) => place(item, "parallax"));
+          zooms.forEach((item) => place(item, "zoom"));
+          tilts.forEach((item) => place(item, "tilt"));
         };
-      });
 
-      /* Com movimento reduzido não há paralaxe, zoom nem revelações: só a rolagem lateral. */
+        /* Percurso lateral principal: sempre ativo. */
+        const horizontal = gsap.to(track, {
+          x: () => -getDistance(),
+          ease: "none",
+          scrollTrigger: {
+            trigger: root,
+            pin: true,
+            scrub: true,
+            anticipatePin: 1,
+            start: "top top",
+            end: () => `+=${Math.round(getDistance() * SCROLL_LENGTH)}`,
+            invalidateOnRefresh: true,
+            onRefresh: (self) => {
+              try {
+                measure();
+                applyScene(self.progress * getDistance());
+              } catch (error) {
+                bail(error);
+              }
+            },
+            onUpdate: (self) => {
+              try {
+                const x = self.progress * getDistance();
+                applyScene(x);
+                let current = 0;
+                offsetsRef.current.forEach((offset, i) => {
+                  if (offset <= x + window.innerWidth * 0.4) current = i;
+                });
+                setActive(current);
+                if (barRef.current) gsap.set(barRef.current, { scaleX: self.progress });
+                if (stripRef.current) {
+                  gsap.set(stripRef.current, { backgroundPositionX: -x * STRIP_SPEED });
+                }
+              } catch (error) {
+                bail(error);
+              }
+            },
+          },
+        });
+        stageTriggerRef.current = horizontal.scrollTrigger ?? null;
 
-      /* Interações de ponteiro fino: inclinação dos cartazes e botões magnéticos. */
-      mm.add(
-        "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
-        () => {
+        /* Os slides já visíveis ganham .is-in ANTES de ligar o modo de movimento (nada pisca). */
+        applyScene(getStageX());
+        if (motionAllowed) html.dataset.motion = "on";
+
+        /* Interações de ponteiro fino: inclinação dos cartazes e botões magnéticos. */
+        mm = gsap.matchMedia();
+        mm.add("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)", () => {
           const cleanups: Array<() => void> = [];
 
           root.querySelectorAll<HTMLElement>("[data-tilt]").forEach((el) => {
@@ -432,19 +408,17 @@ export function Stage({ titles, children }: StageProps) {
           });
 
           return () => cleanups.forEach((fn) => fn());
-        },
-      );
-
-      return () => {
-        mm.revert();
-      };
+        });
       } catch (error) {
-        console.error("Stage: animações desativadas, usando rolagem nativa.", error);
-        ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-        gsap.set(track, { clearProps: "transform" });
-        root.classList.add("stage-fallback");
+        bail(error);
         return undefined;
       }
+
+      return () => {
+        mm?.revert();
+        counterTweens.forEach((tween) => tween.kill());
+        html.removeAttribute("data-motion");
+      };
     },
     { scope: rootRef, dependencies: [setActive, ready] },
   );
@@ -520,6 +494,22 @@ export function Stage({ titles, children }: StageProps) {
           </ol>
 
           <div className="flex items-center gap-1.5">
+            {fullscreen.supported ? (
+              <button
+                type="button"
+                onClick={() => void fullscreen.toggle()}
+                aria-label={fullscreen.active ? "Sair da tela cheia" : "Tela cheia"}
+                aria-pressed={fullscreen.active}
+                title={fullscreen.active ? "Sair da tela cheia (F)" : "Tela cheia (F)"}
+                className="flex size-12 cursor-pointer items-center justify-center rounded-sm border border-line bg-white text-ink transition-colors duration-300 hover:border-ink active:scale-95 short:size-11"
+              >
+                {fullscreen.active ? (
+                  <Minimize2 className="size-4" aria-hidden="true" />
+                ) : (
+                  <Maximize2 className="size-4" aria-hidden="true" />
+                )}
+              </button>
+            ) : null}
             <button
               type="button"
               data-magnetic

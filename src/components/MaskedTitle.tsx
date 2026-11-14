@@ -47,7 +47,7 @@ export function MaskedTitle({
                 >
                   <span
                     data-word={intro ? undefined : ""}
-                    style={intro ? ({ "--i": index } as CSSProperties) : undefined}
+                    style={{ "--i": index } as CSSProperties}
                     className={`inline-block ${intro ? "intro-word" : ""} ${
                       accent.includes(index) ? "text-accent" : ""
                     }`}

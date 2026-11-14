@@ -2,7 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { Smartphone } from "lucide-react";
+import { Maximize2, Smartphone } from "lucide-react";
+import { useFullscreen } from "@/lib/useFullscreen";
 
 /**
  * Aviso para girar o celular. A visibilidade é decidida só por CSS (celular na vertical),
@@ -11,6 +12,7 @@ import { Smartphone } from "lucide-react";
  */
 export function RotatePrompt() {
   const [dismissed, setDismissed] = useState(false);
+  const fullscreen = useFullscreen();
 
   return (
     <div
@@ -27,8 +29,18 @@ export function RotatePrompt() {
         Gire o <span className="text-accent">celular</span>
       </h2>
       <p id="rotate-text" className="t-body max-w-[30ch]">
-        Esta apresentação foi feita para ser vista na horizontal. Deite o celular para começar.
+        Esta apresentação foi feita para ser vista na horizontal. Deite o celular para começar, ou use a tela cheia para ele girar sozinho.
       </p>
+      {fullscreen.supported ? (
+        <button
+          type="button"
+          onClick={() => void fullscreen.toggle()}
+          className="inline-flex h-12 cursor-pointer items-center gap-3 rounded-sm bg-ink px-6 text-sm font-semibold text-white transition-colors duration-300 hover:bg-accent active:scale-95"
+        >
+          <Maximize2 className="size-4" aria-hidden="true" />
+          Tela cheia e girar
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => setDismissed(true)}

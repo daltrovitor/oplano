@@ -239,3 +239,74 @@ summary {
     transform: rotate(-90deg);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Revelações guiadas por CSS. O conteúdo é visível por padrão e só é escondido
+   enquanto o motor de animação estiver vivo (html[data-motion="on"]); o motor
+   marca .is-in no slide que entra na tela. Se ele falhar, nada fica invisível.
+   --------------------------------------------------------------------------- */
+html[data-motion="on"] [data-slide] [data-word] {
+  transition: transform 1.15s var(--ease-cine) calc(100ms + var(--i, 0) * 70ms);
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-word] {
+  transform: translateY(118%);
+  transition: none;
+}
+
+html[data-motion="on"] [data-slide] [data-rise] {
+  transition:
+    opacity 0.95s var(--ease-cine) calc(var(--d, 0) * 1ms),
+    transform 0.95s var(--ease-cine) calc(var(--d, 0) * 1ms);
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-rise] {
+  opacity: 0;
+  transform: translateY(34px);
+  transition: none;
+}
+
+html[data-motion="on"] [data-slide] [data-clip] {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1.4s cubic-bezier(0.76, 0, 0.24, 1) calc(var(--d, 0) * 1ms);
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-clip] {
+  transition: none;
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-clip="l"] {
+  clip-path: inset(0 100% 0 0);
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-clip="r"] {
+  clip-path: inset(0 0 0 100%);
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-clip="u"] {
+  clip-path: inset(100% 0 0 0);
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-clip="d"] {
+  clip-path: inset(0 0 100% 0);
+}
+
+html[data-motion="on"] [data-slide] [data-hline] {
+  transform-origin: left center;
+  transition: transform 1.2s var(--ease-cine) calc(var(--d, 0) * 1ms);
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-hline] {
+  transform: scaleX(0);
+  transition: none;
+}
+
+html[data-motion="on"] [data-slide] [data-line] {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1.4s var(--ease-cine) calc(var(--d, 0) * 1ms);
+}
+
+html[data-motion="on"] [data-slide]:not(.is-in) [data-line] {
+  clip-path: inset(0 0 100% 0);
+  transition: none;
+}
