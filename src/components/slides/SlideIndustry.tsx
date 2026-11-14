@@ -23,15 +23,15 @@ const PRINCIPLES = [
 export function SlideIndustry() {
   return (
     <SlideShell id="industria-cultural" title={CHAPTERS.industry} backdrop="/img/cinema-audience.jpg">
-      <div className="flex h-full flex-col gap-4 lg:grid lg:grid-cols-12 lg:items-center lg:gap-14">
-        <div className="flex flex-col gap-3 lg:col-span-5 lg:gap-6">
+      <div className="flex h-full flex-col gap-4 desk:grid desk:grid-cols-12 desk:items-center desk:gap-14">
+        <div className="flex flex-col gap-3 desk:col-span-5 desk:gap-6 short:gap-2">
           <MaskedTitle text="A indústria cultural" accent={[2]} className="t-display t-title" />
           <p data-rise className="t-body">
             O conceito nasce com Theodor Adorno e Max Horkheimer, na Dialética do Esclarecimento
             (1947). Para eles, a cultura passa a ser produzida em série, como mercadoria, para
             entreter as massas e acomodá-las ao sistema. O cinema é o exemplo central.
           </p>
-          <div className="hidden lg:block">
+          <div className="hidden desk:block short:hidden">
             <Frame
               src="/img/cinema-audience.jpg"
               alt="Plateia em preto e branco diante de uma tela de cinema iluminada"
@@ -44,9 +44,9 @@ export function SlideIndustry() {
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col justify-center gap-3 lg:col-span-7 lg:flex-none lg:gap-8 lg:pl-[4vw]">
+        <div className="flex min-h-0 flex-1 flex-col justify-center gap-3 desk:col-span-7 desk:flex-none desk:gap-8 desk:pl-[4vw] short:gap-2">
           {PRINCIPLES.map((principle) => (
-            <div key={principle.title} className="relative pt-3 lg:pt-6">
+            <div key={principle.title} className="relative pt-3 desk:pt-6 short:pt-2">
               <span data-hline className="absolute left-0 top-0 h-px w-full bg-ink/20" />
               <h3
                 data-rise
@@ -54,7 +54,7 @@ export function SlideIndustry() {
               >
                 {principle.title}
               </h3>
-              <p data-rise className="t-body mt-1 max-w-[52ch] lg:mt-2">
+              <p data-rise className="t-body mt-1 max-w-[52ch] desk:mt-2">
                 {principle.text}
               </p>
             </div>

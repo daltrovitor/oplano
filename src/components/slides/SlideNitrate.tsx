@@ -8,8 +8,8 @@ import { CHAPTERS } from "@/data/chapters";
 export function SlideNitrate() {
   return (
     <SlideShell id="arma-fisica" title={CHAPTERS.nitrate} backdrop="/img/nitrate-flame.jpg" widthVw={175}>
-      <div className="flex h-full items-center gap-[6vw] lg:gap-[4vw]">
-        <div className="flex w-[84vw] shrink-0 flex-col gap-3 lg:w-[min(36vw,580px)] lg:gap-6">
+      <div className="flex h-full items-center gap-[6vw] desk:gap-[4vw]">
+        <div className="flex w-[84vw] shrink-0 flex-col gap-3 desk:w-[min(36vw,580px)] short:w-[46vw] desk:gap-6">
           <MaskedTitle
             text="O cinema como arma física"
             accent={[3, 4]}
@@ -26,7 +26,7 @@ export function SlideNitrate() {
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-1 lg:w-[min(20vw,300px)]">
+        <div className="flex shrink-0 flex-col gap-1 desk:w-[min(20vw,300px)]">
           <span
             data-count="350"
             className="t-display text-[clamp(5rem,13vw,13rem)] font-black leading-[0.85] text-accent tabular-nums"
@@ -43,7 +43,7 @@ export function SlideNitrate() {
           src="/img/nitrate-label.jpg"
           alt="Rótulo antigo de uma lata de película cinematográfica de nitrato, impresso em verde e amarelo"
           caption="Rótulo de uma lata de película antiga: a memória do cinema em material inflamável."
-          className="w-[62vw] shrink-0 self-start sm:w-[32vw] lg:mt-[3svh] lg:w-[min(22vw,calc(48svh*1.05))]"
+          className="w-[62vw] shrink-0 self-start sm:w-[32vw] desk:mt-[3svh] desk:w-[min(22vw,calc(48svh*1.05))]"
           aspect="1800/1720"
           clip="u"
           speed={0.06}
@@ -54,7 +54,7 @@ export function SlideNitrate() {
           src="/img/shosanna-film.jpg"
           alt="Shosanna segurando uma tira de película contra a luz na cabine de projeção"
           caption="Shosanna examina a película: a história do cinema francês vira combustível."
-          className="w-[84vw] shrink-0 self-end sm:w-[48vw] lg:mb-[2svh] lg:w-[min(32vw,calc(38svh*2))]"
+          className="w-[84vw] shrink-0 self-end sm:w-[48vw] desk:mb-[2svh] desk:w-[min(32vw,calc(38svh*2))]"
           aspect="2/1"
           clip="l"
           speed={-0.04}
@@ -65,7 +65,7 @@ export function SlideNitrate() {
           src="/img/nitrate-flame.jpg"
           alt="Tira de filme pegando fogo em uma chama intensa, segurada com uma pinça"
           caption="Uma tira de nitrato em chamas: queima rápido e não se apaga fácil."
-          className="mr-[4vw] w-[70vw] shrink-0 sm:w-[38vw] lg:w-[min(24vw,calc(40svh*1.52))]"
+          className="mr-[4vw] w-[70vw] shrink-0 sm:w-[38vw] desk:w-[min(24vw,calc(40svh*1.52))]"
           aspect="1013/667"
           clip="r"
           speed={0.09}

@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display, UnifrakturCook } from "next/font/google";
 import "lenis/dist/lenis.css";
 import "./globals.css";
+import { RotatePrompt } from "@/components/RotatePrompt";
 import { SmoothScrollProvider } from "@/components/SmoothScrollProvider";
 
 const playfair = Playfair_Display({
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${playfair.variable} ${inter.variable} ${fraktur.variable}`}
     >
       <body suppressHydrationWarning>
+        <RotatePrompt />
         <SmoothScrollProvider>{children}</SmoothScrollProvider>
       </body>
     </html>

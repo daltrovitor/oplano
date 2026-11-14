@@ -57,7 +57,7 @@ export function SlideShell({
       ) : null}
 
       {/* Plano 2 — conteúdo */}
-      <div className="relative z-10 h-full px-5 pb-[76px] pt-12 sm:px-8 lg:px-[clamp(40px,5vw,96px)] lg:pb-[88px] lg:pt-[56px]">
+      <div className="relative z-10 h-full px-5 pb-[76px] pt-12 sm:px-8 desk:px-[clamp(40px,5vw,96px)] desk:pb-[88px] desk:pt-[56px] short:px-[4vw] short:pb-[58px] short:pt-[28px]">
         {children}
       </div>
 
@@ -66,12 +66,12 @@ export function SlideShell({
         <span
           data-speed="0.14"
           data-line
-          className="absolute bottom-[76px] top-6 left-[38.2%] hidden w-px bg-ink/[0.06] lg:block"
+          className="absolute bottom-[76px] top-6 left-[38.2%] hidden w-px bg-ink/[0.06] desk:block short:bottom-[52px] short:top-4"
         />
         <span
           data-speed="0.3"
           data-line
-          className="absolute bottom-[76px] top-6 left-[61.8%] hidden w-px bg-ink/[0.06] lg:block"
+          className="absolute bottom-[76px] top-6 left-[61.8%] hidden w-px bg-ink/[0.06] desk:block short:bottom-[52px] short:top-4"
         />
       </div>
     </section>

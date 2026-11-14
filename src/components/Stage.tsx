@@ -67,6 +67,7 @@ export function Stage({ titles, children }: StageProps) {
   const widthsRef = useRef<number[]>([]);
   const parallaxRef = useRef<SceneItem[]>([]);
   const zoomRef = useRef<SceneItem[]>([]);
+  const tiltRef = useRef<SceneItem[]>([]);
   const activeRef = useRef(0);
   const targetRef = useRef(0);
   const lastJumpRef = useRef(0);
@@ -198,19 +199,23 @@ export function Stage({ titles, children }: StageProps) {
        */
       const applyScene = (stageX: number) => {
         const W = window.innerWidth;
-        const place = (item: SceneItem, kind: "parallax" | "zoom") => {
+        const place = (item: SceneItem, kind: "parallax" | "zoom" | "tilt") => {
           const left = offsetsRef.current[item.slide] - stageX;
           const width = widthsRef.current[item.slide];
           if (left > 2 * W || left + width < -W) return;
           if (kind === "parallax") {
             const p = clamp01((W - left) / (W + width));
             item.set(item.speed * W * (1 - 2 * p));
+          } else if (kind === "tilt") {
+            /* No toque não há ponteiro: os cartazes giram suavemente conforme o slide cruza a tela. */
+            item.set((0.5 - clamp01((W - left) / (W + width))) * 18);
           } else {
             item.set(1 + ZOOM_FROM * (1 - clamp01((W - left) / W)));
           }
         };
         parallaxRef.current.forEach((item) => place(item, "parallax"));
         zoomRef.current.forEach((item) => place(item, "zoom"));
+        tiltRef.current.forEach((item) => place(item, "tilt"));
       };
 
       /* Percurso lateral principal: sempre ativo, mesmo com movimento reduzido. */
@@ -248,9 +253,12 @@ export function Stage({ titles, children }: StageProps) {
       const mm = gsap.matchMedia();
 
       /* Animações cinematográficas (desligadas quando o usuário pede menos movimento). */
-      mm.add("(prefers-reduced-motion: no-preference)", (context) => {
+      /* Com ponteiro de toque (celular) todas as animações ficam ligadas; o "reduzir movimento" só vale em desktop. */
+      mm.add("(prefers-reduced-motion: no-preference), (pointer: coarse)", (context) => {
         const parallax: SceneItem[] = [];
         const zooms: SceneItem[] = [];
+        const tilts: SceneItem[] = [];
+        const touchOnly = window.matchMedia("(pointer: coarse)").matches;
         let cancelled = false;
 
         /* Paralaxe entre planos (fundo lento, primeiro plano rápido) e zoom: passada leve em todos os slides. */
@@ -264,6 +272,12 @@ export function Stage({ titles, children }: StageProps) {
           q<HTMLElement>("[data-zoom]").forEach((el) => {
             zooms.push({ slide: index, speed: 0, set: gsap.quickSetter(el, "scale") as SceneItem["set"] });
           });
+          if (touchOnly) {
+            q<HTMLElement>("[data-tilt]").forEach((el) => {
+              gsap.set(el, { transformPerspective: 900 });
+              tilts.push({ slide: index, speed: 0, set: gsap.quickSetter(el, "rotationY", "deg") as SceneItem["set"] });
+            });
+          }
         });
 
         /* Linha do tempo de entrada de um slide: é a parte pesada, então só os dois primeiros
@@ -355,12 +369,14 @@ export function Stage({ titles, children }: StageProps) {
 
         parallaxRef.current = parallax;
         zoomRef.current = zooms;
+        tiltRef.current = tilts;
         applyScene(getStageX());
 
         return () => {
           cancelled = true;
           parallaxRef.current = [];
           zoomRef.current = [];
+          tiltRef.current = [];
         };
       });
 
@@ -455,7 +471,7 @@ export function Stage({ titles, children }: StageProps) {
         <div
           ref={stripRef}
           aria-hidden="true"
-          className="film-strip absolute inset-x-0 top-0 z-40 h-6"
+          className="film-strip absolute inset-x-0 top-0 z-40 h-6 short:h-4"
         />
 
         <div ref={trackRef} className="relative flex h-full w-max will-change-transform">
@@ -464,7 +480,7 @@ export function Stage({ titles, children }: StageProps) {
 
         <nav
           aria-label="Navegação entre os slides"
-          className="absolute inset-x-0 bottom-0 z-50 flex h-16 items-center justify-between gap-3 border-t border-line bg-white px-4 sm:px-8 lg:px-[clamp(40px,5vw,96px)]"
+          className="absolute inset-x-0 bottom-0 z-50 flex h-16 items-center justify-between gap-3 border-t border-line bg-white px-4 sm:px-8 desk:px-[clamp(40px,5vw,96px)] short:h-[52px] short:px-[4vw]"
         >
           <div
             ref={barRef}
@@ -495,7 +511,7 @@ export function Stage({ titles, children }: StageProps) {
                   aria-current={i === 0 ? "step" : undefined}
                   title={title}
                   onClick={() => goTo(i)}
-                  className="group flex h-12 w-6 cursor-pointer items-center justify-center"
+                  className="group flex h-12 w-6 cursor-pointer items-center justify-center short:h-11"
                 >
                   <span className="h-3.5 w-px bg-ink/30 transition-all duration-300 group-hover:bg-ink group-aria-[current=step]:h-6 group-aria-[current=step]:bg-accent" />
                 </button>
@@ -509,7 +525,7 @@ export function Stage({ titles, children }: StageProps) {
               data-magnetic
               aria-label="Slide anterior"
               onClick={() => step(-1)}
-              className="flex size-12 cursor-pointer items-center justify-center rounded-sm border border-line bg-white text-ink transition-colors duration-300 hover:border-ink"
+              className="flex size-12 cursor-pointer items-center justify-center rounded-sm border border-line bg-white text-ink transition-colors duration-300 hover:border-ink active:scale-95 short:size-11"
             >
               <ChevronLeft className="size-5" aria-hidden="true" />
             </button>
@@ -518,7 +534,7 @@ export function Stage({ titles, children }: StageProps) {
               data-magnetic
               aria-label="Próximo slide"
               onClick={() => step(1)}
-              className="flex size-12 cursor-pointer items-center justify-center rounded-sm border border-ink bg-ink text-white transition-colors duration-300 hover:border-accent hover:bg-accent"
+              className="flex size-12 cursor-pointer items-center justify-center rounded-sm border border-ink bg-ink text-white transition-colors duration-300 hover:border-accent hover:bg-accent active:scale-95 short:size-11"
             >
               <ChevronRight className="size-5" aria-hidden="true" />
             </button>

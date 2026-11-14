@@ -16,8 +16,8 @@ const THEMES = [
 export function SlideFilm() {
   return (
     <SlideShell id="o-filme" title={CHAPTERS.film} backdrop="/img/trio.jpg">
-      <div className="flex h-full flex-col gap-4 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12">
-        <div className="flex flex-col gap-3 lg:col-span-5 lg:gap-6">
+      <div className="flex h-full flex-col gap-4 desk:grid desk:grid-cols-12 desk:items-center desk:gap-12">
+        <div className="flex flex-col gap-3 desk:col-span-5 desk:gap-6 short:col-span-6 short:gap-2">
           <MaskedTitle
             text="Uma vingança que a História não deu"
             accent={[1]}
@@ -30,11 +30,11 @@ export function SlideFilm() {
             vingança. As duas histórias se cruzam em um plano para eliminar a cúpula do regime
             durante uma sessão de cinema.
           </p>
-          <p data-rise className="t-body hidden sm:block">
+          <p data-rise className="t-body hidden sm:block short:hidden">
             O filme trata de antissemitismo, resistência, vingança, violência e perseguição aos
             judeus, e termina com um desfecho fictício, diferente da história real.
           </p>
-          <ul data-rise className="hidden flex-wrap gap-2 lg:flex" aria-label="Temas do filme">
+          <ul data-rise className="hidden flex-wrap gap-2 desk:flex short:hidden" aria-label="Temas do filme">
             {THEMES.map((theme) => (
               <li
                 key={theme}
@@ -53,17 +53,17 @@ export function SlideFilm() {
           </p>
         </div>
 
-        <div className="relative min-h-0 flex-1 lg:col-span-7 lg:h-[70svh] lg:flex-none">
+        <div className="relative min-h-0 flex-1 desk:col-span-7 desk:h-[70svh] desk:flex-none short:col-span-6 short:h-[62svh]">
           <Frame
             src="/img/trio.jpg"
             alt="Aldo Raine, Hans Landa e Hitler em montagem em preto e branco de Bastardos Inglórios"
             caption="Bastardos Inglórios (2009), de Quentin Tarantino."
-            className="absolute inset-0 lg:inset-x-auto lg:left-0 lg:top-[2%] lg:w-[86%]"
+            className="absolute inset-0 desk:inset-x-auto desk:left-0 desk:top-[2%] desk:w-[86%]"
             aspect="16/9"
             clip="l"
             sizes="(min-width: 1024px) 48vw, 90vw"
           />
-          <div className="hidden lg:block">
+          <div className="hidden desk:block">
             <Frame
               src="/img/landa-aldo.jpg"
               alt="Hans Landa e Aldo Raine rindo juntos durante a cena do acordo"

@@ -10,16 +10,16 @@ import { CHAPTERS } from "@/data/chapters";
 export function SlideCover() {
   return (
     <SlideShell id="capa" title={CHAPTERS.cover}>
-      <div className="flex h-full flex-col justify-between gap-4 lg:grid lg:grid-cols-12 lg:items-center lg:gap-10">
-        <div className="flex flex-col gap-4 lg:col-span-7 lg:gap-8">
+      <div className="flex h-full flex-col justify-between gap-4 desk:grid desk:grid-cols-12 desk:items-center desk:gap-10">
+        <div className="flex flex-col gap-4 desk:col-span-7 desk:gap-8 short:gap-2">
           <MaskedTitle
             as="h1"
             text={"Bastardos\nInglórios"}
             accent={[1]}
             intro
-            className="t-display text-[clamp(2.7rem,14vw,4.6rem)] leading-[0.95] lg:text-[clamp(4rem,9.2vw,10.5rem)]"
+            className="t-display text-[clamp(2.7rem,14vw,4.6rem)] leading-[0.95] desk:text-[clamp(4rem,9.2vw,10.5rem)] short:text-[clamp(2rem,16vh,4rem)]"
           />
-          <p className="intro-rise t-body max-w-[46ch] text-ink lg:text-[clamp(1rem,1.5vw,1.5rem)]">
+          <p className="intro-rise t-body max-w-[46ch] text-ink desk:text-[clamp(1rem,1.5vw,1.5rem)] short:text-[0.8rem]">
             O cinema como máquina de propaganda e como arma de vingança.
           </p>
 
@@ -36,7 +36,7 @@ export function SlideCover() {
               Começar
               <ArrowRight className="size-4" aria-hidden="true" />
             </button>
-            <p className="t-note">Role para o lado ou use as setas do teclado.</p>
+            <p className="t-note short:hidden">Role para o lado ou use as setas do teclado.</p>
           </div>
 
           <div className="relative pt-3 sm:pt-4">
@@ -49,12 +49,12 @@ export function SlideCover() {
           </div>
         </div>
 
-        <div className="relative min-h-0 flex-1 lg:col-span-5 lg:h-[68svh] lg:flex-none">
+        <div className="relative min-h-0 flex-1 desk:col-span-5 desk:h-[68svh] desk:flex-none">
           <Frame
             src="/img/hero-projector.jpg"
             alt="Projetor de cinema antigo lançando um feixe de luz sobre a sala escura"
             caption="O projetor: a máquina que serve tanto à propaganda quanto à vingança."
-            className="absolute inset-0 lg:inset-y-[4%]"
+            className="absolute inset-0 desk:inset-y-[4%]"
             captionClassName="ml-auto text-right"
             clip="r"
             intro
@@ -64,7 +64,7 @@ export function SlideCover() {
           <Frame
             src="/img/basterds-poster.jpg"
             alt="Cartaz de Bastardos Inglórios, de Quentin Tarantino, com Brad Pitt ao centro"
-            className="absolute -bottom-2 left-1 w-[24%] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.5)] lg:-left-14 lg:bottom-[-2%] lg:w-[32%]"
+            className="absolute -bottom-2 left-1 w-[24%] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.5)] desk:-left-14 desk:bottom-[-2%] desk:w-[32%]"
             aspect="255/378"
             clip="u"
             intro
